@@ -1,24 +1,11 @@
 package jsonformatting
 
 import (
-	"bytes"
 	"encoding/json"
+	"errors"
 )
 
-const (
-	structOpen   = byte(123) // "{"
-	structClose1 = byte(124) // "}"
-	structClose2 = byte(125) // "}"
-	sliceOpen    = byte(91)  // "["
-	sliceClose   = byte(93)  // "]"
-
-	comma     = byte(44) // ","
-	quote     = byte(34) // "\""
-	backslash = byte(92) // "\\"
-
-	newLine = int32(10) // "/n"
-	tab     = byte(9)   // "TAB"
-)
+var ErrJsonFormat = errors.New("jsonformatting: incorrect json format")
 
 // ConvertToFormatJSON if the incoming data is JSON, the function returns a formatted slice byte.
 // Otherwise it returns the original slice.
@@ -28,65 +15,15 @@ func ConvertToFormatJSON(data []byte) []byte {
 		return data
 	}
 
-	var buf bytes.Buffer
-	var start int
-	var prefix []byte
-	var quoteStart bool
+	return handler(data)
+}
 
-	for i, b := range data {
-
-		if quoteStart {
-			_ = buf.WriteByte(b)
-			start = i + 1
-			if b == quote && (data[i-1] != backslash) {
-				quoteStart = false
-			}
-			continue
-		}
-
-		switch b {
-		case structOpen, sliceOpen:
-
-			_, _ = buf.Write(data[start : i+1])
-			_, _ = buf.WriteRune(newLine)
-			prefix = append(prefix, tab)
-			_, _ = buf.Write(prefix)
-
-		case structClose1:
-
-			_, _ = buf.WriteRune(newLine)
-			_, _ = buf.Write(data[start : i+1])
-			prefix = prefix[:len(prefix)-1]
-			_, _ = buf.Write(prefix)
-			_, _ = buf.WriteRune(newLine)
-
-		case structClose2, sliceClose:
-
-			_, _ = buf.WriteRune(newLine)
-			if len(prefix) > 0 {
-				prefix = prefix[:len(prefix)-1]
-			}
-			_, _ = buf.Write(prefix)
-			_, _ = buf.Write(data[start : i+1])
-
-			start = i + 1
-			continue
-		case comma:
-
-			_, _ = buf.Write(data[start : i+1])
-			_, _ = buf.WriteRune(newLine)
-			_, _ = buf.Write(prefix)
-
-		case quote:
-			_ = buf.WriteByte(b)
-			quoteStart = true
-		default:
-			_ = buf.WriteByte(b)
-		}
-
-		start = i + 1
+// ConvertToFormatJSONWithError if the incoming data is JSON, the function returns a formatted slice byte.
+// Otherwise it returns error.
+func ConvertToFormatJSONWithError(data []byte) ([]byte, error) {
+	if !json.Valid(data) {
+		return nil, ErrJsonFormat
 	}
 
-	return buf.Bytes()
-
+	return handler(data), nil
 }

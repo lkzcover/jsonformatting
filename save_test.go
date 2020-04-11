@@ -48,5 +48,27 @@ func TestSaveToFile(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+}
 
+func TestConvertToFormatJSONWithError(t *testing.T) {
+
+	errorJSON := []byte(`
+					{
+						"test": "a"
+					}}
+				`)
+
+	if _, err := ConvertToFormatJSONWithError(errorJSON); err == nil {
+		t.Fatalf("incorrect json format: %s, but ConvertToFormatJSONWithError return error == nil ", string(errorJSON))
+	}
+
+	correctJSON := []byte(`
+					{
+						"test": "a"
+					}
+				`)
+
+	if _, err := ConvertToFormatJSONWithError(correctJSON); err != nil {
+		t.Fatalf("correct json format: %s, but ConvertToFormatJSONWithError return error == %s ", string(errorJSON), err)
+	}
 }
