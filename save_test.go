@@ -14,8 +14,12 @@ func TestSaveToFile(t *testing.T) {
 		FieldStruct  struct {
 			FieldMap     map[uint64]interface{} `json:"field_map"`
 			FieldSlice   []string               `json:"field_slice"`
+			Slice        []struct{}             `json:"slice"`
 			FieldNumeric uint8                  `json:"field_numeric"`
 		} `json:"field_struct"`
+		FieldStructEmpty struct {
+			FieldString *string `json:"field_string,omitempty"`
+		} `json:"field_struct_empty"`
 		FieldStruct2 struct {
 			FieldString string `json:"field_string"`
 		} `json:"field_struct_2"`
@@ -27,12 +31,17 @@ func TestSaveToFile(t *testing.T) {
 		FieldStruct: struct {
 			FieldMap     map[uint64]interface{} `json:"field_map"`
 			FieldSlice   []string               `json:"field_slice"`
+			Slice        []struct{}             `json:"slice"`
 			FieldNumeric uint8                  `json:"field_numeric"`
 		}{
 			FieldMap:     map[uint64]interface{}{1: uint64(23), 2: "test", 3: true, 4: []byte("hello world")},
 			FieldSlice:   []string{"1", "2", "3"},
+			Slice:        []struct{}{},
 			FieldNumeric: 0,
 		},
+		FieldStructEmpty: struct {
+			FieldString *string `json:"field_string,omitempty"`
+		}{FieldString: nil},
 		FieldStruct2: struct {
 			FieldString string `json:"field_string"`
 		}{FieldString: "as}{[]},\""},
@@ -64,11 +73,35 @@ func TestConvertToFormatJSONWithError(t *testing.T) {
 
 	correctJSON := []byte(`
 					{
-						"test": "a"
+						"test": "a",
+						"struct":[],
+						"struct2": {},
+						"test2": "test"
 					}
 				`)
 
 	if _, err := ConvertToFormatJSONWithError(correctJSON); err != nil {
 		t.Fatalf("correct json format: %s, but ConvertToFormatJSONWithError return error == %s ", string(errorJSON), err)
+	}
+
+	correctJSON = []byte(`
+					{}
+				`)
+
+	if _, err := ConvertToFormatJSONWithError(correctJSON); err != nil {
+		t.Fatalf("correct json format: %s, but ConvertToFormatJSONWithError return error == %s ", string(errorJSON), err)
+	}
+
+	correctJSON = []byte(`
+					{
+						"test": "a",
+						"struct":[],
+						"struct2": {}
+						"test2": "test"
+					}
+				`)
+
+	if _, err := ConvertToFormatJSONWithError(correctJSON); err == nil {
+		t.Fatalf("incorrect json format: %s, but ConvertToFormatJSONWithError return error == nil", string(errorJSON))
 	}
 }

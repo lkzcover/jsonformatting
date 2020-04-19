@@ -38,9 +38,11 @@ func handler(data []byte) []byte {
 		case structOpen, sliceOpen:
 
 			_, _ = buf.Write(data[start : i+1])
-			_, _ = buf.WriteRune(newLine)
-			prefix = append(prefix, tab)
-			_, _ = buf.Write(prefix)
+			if (data[i+1] != structClose1) && (data[i+1] != structClose2) && (data[i+1] != sliceClose) {
+				_, _ = buf.WriteRune(newLine)
+				prefix = append(prefix, tab)
+				_, _ = buf.Write(prefix)
+			}
 
 		case structClose1:
 
@@ -52,11 +54,13 @@ func handler(data []byte) []byte {
 
 		case structClose2, sliceClose:
 
-			_, _ = buf.WriteRune(newLine)
-			if len(prefix) > 0 {
-				prefix = prefix[:len(prefix)-1]
+			if (data[i-1] != structOpen) && (data[i-1] != sliceOpen) {
+				_, _ = buf.WriteRune(newLine)
+				if len(prefix) > 0 {
+					prefix = prefix[:len(prefix)-1]
+				}
+				_, _ = buf.Write(prefix)
 			}
-			_, _ = buf.Write(prefix)
 			_, _ = buf.Write(data[start : i+1])
 
 			start = i + 1
